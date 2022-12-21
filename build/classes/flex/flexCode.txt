@@ -1,0 +1,150 @@
+package flex;
+import java_cup.runtime.*;
+import cup.sym;
+%%
+
+%{
+    boolean tokens = false;
+    public int symbol;
+
+    private Symbol symbol(int type){
+        symbol = type;
+        return new Symbol(type,yyline,yycolumn);
+    }
+
+    private Symbol symbol(int type, Object value){
+        symbol = type;
+        return new Symbol(type,yyline,yycolumn, value);
+    }
+
+    public Token yylex() {
+        return new Token(yytext(),symbol,yyline,yycolumn,yychar);
+    }
+
+    public void tokens(boolean tokens){
+        this.tokens = tokens;
+    }
+%}
+
+%public
+%class LexiconParser
+%line
+%column
+%char
+%cup
+
+DELIMITADORES = [\n| |\t|\r|\r\n]
+
+// Palavras Reservadas da linguagem ALG
+
+RESERVADO_PROGRAM = "program"              
+RESERVADO_VAR = "var"                      
+RESERVADO_PROCEDURE = "procedure"           
+RESERVADO_BEGIN = "begin"                  
+RESERVADO_END = "end"                      
+RESERVADO_IF = "if"                        
+RESERVADO_THEN = "then"                    
+RESERVADO_ELSE = "else"                    
+RESERVADO_WHILE = "while"                  
+RESERVADO_DO = "do"                        
+RESERVADO_TRUE = "true"                    
+RESERVADO_FALSE = "false"                  
+RESERVADO_INTEGER = "int"                  
+RESERVADO_BOOLEAN = "boolean"              
+
+// Simbolos auxiliares
+
+PONTO_VIRGULA = ";"                       
+DOIS_PONTOS = ":"                       
+VIRGULA = ","                           
+PONTO = "."                                 
+ABRE_PARENTESES = "("                            
+FECHA_PARENTESES = ")"                           
+
+// Simbolos de operacao 
+
+SIMBOLO_ATRIBUICAO = ":="                       
+OPERACAO_MENOR = "<"                          
+OPERACAO_MAIOR = ">"                          
+OPERACAO_MENOR_IGUAL = "<="                   
+OPERACAO_MAIOR_IGUAL = ">="                   
+OPERACAO_DIFERENTE = "<>"                     
+OPERACAO_IGUAL = "="
+OPERACAO_SOMA = "+"                           
+OPERACAO_SUB = "-"                            
+OPERACAO_DIV = "div"                          
+OPERACAO_MULT = "*"                           
+OPERACAO_OR  = "or"                           
+OPERACAO_AND = "and"                          
+OPERACAO_NOT = "not"                          
+
+// Elementos basicos
+
+NUMERO_REAL_FORMATO_RUIM = [0-9][0-9]*\.|\.[0-9][0-9]* 
+NUMERO_INTEIRO = [0-9]+                    
+NUMERO_REAL = [0-9]+\.[0-9]+               
+IDENTIFICADOR = [_|a-z|A-Z][_|a-z|A-Z|0-9]{0,14}   
+IDENTIFICADOR_MUITO_GRANDE = [_|a-z|A-Z][_|a-z|A-Z|0-9]{15,1000}
+
+// Comentarios
+
+COMENTARIO_LINHA = "//"[^\n]*\n?        
+COMENTARIO_BLOCO = "{"[^}]*"}"         
+COMENTARIO_BLOCO_SEM_FECHAR = "{"[^}]* 
+COMENTARIO_BLOCO_SEM_ABRIR = "}"        
+
+
+%%
+<<EOF>> {return symbol(sym.EOF,"");}
+<YYINITIAL>{
+    
+    {COMENTARIO_LINHA}                  {if (tokens) return symbol(sym.COMENTARIO_LINHA, yytext());}
+    {COMENTARIO_BLOCO}                  {if (tokens) return symbol(sym.COMENTARIO_LINHA, yytext());}
+    {COMENTARIO_BLOCO_SEM_FECHAR}       {return symbol(sym.COMENTARIO_BLOCO_SEM_FECHAR, "{");}
+    {COMENTARIO_BLOCO_SEM_ABRIR}        {return symbol(sym.COMENTARIO_BLOCO_SEM_ABRIR, "}");}
+
+    {DELIMITADORES}                     {/****/}
+    
+    {RESERVADO_PROGRAM}                 {return symbol(sym.RESERVADO_PROGRAM, yytext());}
+    {RESERVADO_VAR}                     {return symbol(sym.RESERVADO_VAR, yytext());}
+    {RESERVADO_PROCEDURE}               {return symbol(sym.RESERVADO_PROCEDURE, yytext());}
+    {RESERVADO_BEGIN}                   {return symbol(sym.RESERVADO_BEGIN, yytext());}
+    {RESERVADO_END}                     {return symbol(sym.RESERVADO_END, yytext());}
+    {RESERVADO_IF}                      {return symbol(sym.RESERVADO_IF, yytext());}
+    {RESERVADO_THEN}                    {return symbol(sym.RESERVADO_THEN, yytext());}
+    {RESERVADO_ELSE}                    {return symbol(sym.RESERVADO_ELSE, yytext());}
+    {RESERVADO_WHILE}                   {return symbol(sym.RESERVADO_WHILE, yytext());}
+    {RESERVADO_DO}                      {return symbol(sym.RESERVADO_DO, yytext());}
+    {RESERVADO_TRUE}                    {return symbol(sym.RESERVADO_TRUE, yytext());}
+    {RESERVADO_FALSE}                   {return symbol(sym.RESERVADO_FALSE, yytext());}
+    {RESERVADO_INTEGER}                 {return symbol(sym.RESERVADO_INTEGER, yytext());}
+    {RESERVADO_BOOLEAN}                 {return symbol(sym.RESERVADO_BOOLEAN, yytext());}
+
+    {PONTO_VIRGULA}                     {return symbol(sym.PONTO_VIRGULA, yytext());}
+    {DOIS_PONTOS}                       {return symbol(sym.DOIS_PONTOS, yytext());}
+    {VIRGULA}                           {return symbol(sym.VIRGULA, yytext());}
+    {ABRE_PARENTESES}                   {return symbol(sym.ABRE_PARENTESES, yytext());}
+    {FECHA_PARENTESES}                  {return symbol(sym.FECHA_PARENTESES, yytext());}
+    {SIMBOLO_ATRIBUICAO}                {return symbol(sym.SIMBOLO_ATRIBUICAO, yytext());}
+    {OPERACAO_MENOR}                    {return symbol(sym.OPERACAO_MENOR, yytext());}
+    {OPERACAO_MAIOR}                    {return symbol(sym.OPERACAO_MAIOR, yytext());}
+    {OPERACAO_MENOR_IGUAL}              {return symbol(sym.OPERACAO_MENOR_IGUAL, yytext());}
+    {OPERACAO_MAIOR_IGUAL}              {return symbol(sym.OPERACAO_MAIOR_IGUAL, yytext());}
+    {OPERACAO_DIFERENTE}                {return symbol(sym.OPERACAO_DIFERENTE, yytext());}
+    {OPERACAO_IGUAL}                    {return symbol(sym.OPERACAO_IGUAL, yytext());}
+    {OPERACAO_SOMA}                     {return symbol(sym.OPERACAO_SOMA, yytext());}
+    {OPERACAO_SUB}                      {return symbol(sym.OPERACAO_SUB, yytext());}
+    {OPERACAO_DIV}                      {return symbol(sym.OPERACAO_DIV, yytext());}
+    {OPERACAO_MULT}                     {return symbol(sym.OPERACAO_MULT, yytext());}
+    {OPERACAO_OR}                       {return symbol(sym.OPERACAO_OR, yytext());}
+    {OPERACAO_AND}                      {return symbol(sym.OPERACAO_AND, yytext());}
+    {OPERACAO_NOT}                      {return symbol(sym.OPERACAO_NOT, yytext());}
+    {NUMERO_INTEIRO}                    {return symbol(sym.NUMERO_INTEIRO, yytext());}
+    {NUMERO_REAL}                       {return symbol(sym.NUMERO_REAL, yytext());}
+    {IDENTIFICADOR}                     {return symbol(sym.IDENTIFICADOR, yytext());}
+    {IDENTIFICADOR_MUITO_GRANDE}        {return symbol(sym.IDENTIFICADOR_MUITO_GRANDE, yytext());}
+    {PONTO}                             {return symbol(sym.PONTO, yytext());}
+    {NUMERO_REAL_FORMATO_RUIM}          {return symbol(sym.NUMERO_REAL_FORMATO_RUIM, yytext());}
+    .                                   {return symbol(sym.CHAR_INVALIDO, yytext());}
+}
+. {return symbol(sym.CHAR_INVALIDO, yytext());}

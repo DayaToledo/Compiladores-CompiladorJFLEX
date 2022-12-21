@@ -1,0 +1,119 @@
+import java_cup.runtime.*;
+import java.util.ArrayList;
+
+parser code {:
+   private ArrayList<String> errors;
+
+   public parser(Scanner scanner, ArrayList<String> errors){
+      super(scanner);
+      this.errors = errors;
+   }
+
+   public int error_sync_size(){
+      return 1;
+   }
+
+   public void report_error(String message, Object info) {
+      StringBuilder messageError = new StringBuilder("Error");
+   
+      if (info instanceof java_cup.runtime.Symbol) {
+         java_cup.runtime.Symbol symbol = ((java_cup.runtime.Symbol) info);
+   
+         if (symbol.left >= 0) {                
+            messageError.append(" in line "+(symbol.left+1));   
+            if (symbol.right >= 0)                    
+               messageError.append(", column "+(symbol.right+1));
+         }
+      }
+   
+      messageError.append(" : " + message);
+      System.err.println(messageError);
+   }
+   
+   public void report_fatal_error(String message, Object info) {
+      report_error(message, info);
+   }
+:};
+
+terminal RESERVADO_PROGRAM, RESERVADO_VAR, RESERVADO_PROCEDURE, RESERVADO_BEGIN, RESERVADO_END, RESERVADO_IF, RESERVADO_THEN, RESERVADO_ELSE, RESERVADO_WHILE, RESERVADO_DO, RESERVADO_TRUE, RESERVADO_FALSE, RESERVADO_INTEGER, RESERVADO_BOOLEAN, PONTO_VIRGULA, DOIS_PONTOS, VIRGULA, PONTO, ABRE_PARENTESES, FECHA_PARENTESES, SIMBOLO_ATRIBUICAO, OPERACAO_MENOR, OPERACAO_MAIOR, OPERACAO_MENOR_IGUAL, OPERACAO_MAIOR_IGUAL, OPERACAO_DIFERENTE, OPERACAO_IGUAL, OPERACAO_SOMA, OPERACAO_SUB, OPERACAO_DIV, OPERACAO_MULT, OPERACAO_OR, OPERACAO_AND, OPERACAO_NOT, NUMERO_REAL_FORMATO_RUIM, NUMERO_INTEIRO, NUMERO_REAL, IDENTIFICADOR, IDENTIFICADOR_MUITO_GRANDE, COMENTARIO_LINHA, COMENTARIO_BLOCO, COMENTARIO_BLOCO_SEM_FECHAR, COMENTARIO_BLOCO_SEM_ABRIR, CHAR_INVALIDO;
+
+non terminal declaracao_programa, bloco_codigo, apos_lista_declara_variavel, lista_declara_variavel, lista_declara_variavel_2, declara_variavel, lista_variaveis, lista_variaveis_2, lista_declara_procedure, lista_declara_proc_2, declara_procedure, declara_proc_2, declara_proc_3, proc_parametros, proc_lista_parametros, proc_lista_parametros_2 , comando_composto, lista_comandos, comando, atribuicao, chamada_funcao, chamada_funcao_2, comando_condicional, comando_condicional_2, comando_repetitivo, expressao, expressao_2, operacao_relacional, expressao_simples, lista_expressao_simples, termo, lista_termos, fator, variavel, lista_expressoes, lista_expressoes_2, tipo;
+
+precedence left OPERACAO_SOMA, OPERACAO_SUB; 
+precedence left OPERACAO_MULT, OPERACAO_DIV; 
+precedence left RESERVADO_ELSE;
+
+declaracao_programa ::= RESERVADO_PROGRAM IDENTIFICADOR PONTO_VIRGULA bloco_codigo PONTO;
+
+bloco_codigo ::= lista_declara_variavel apos_lista_declara_variavel | 
+   lista_declara_procedure comando_composto | 
+   comando_composto;
+
+apos_lista_declara_variavel ::= lista_declara_procedure comando_composto | comando_composto;
+
+lista_declara_variavel ::= declara_variavel PONTO_VIRGULA lista_declara_variavel_2;
+lista_declara_variavel_2 ::= lista_declara_variavel | /**vazio**/;
+
+declara_variavel ::= tipo lista_variaveis;
+
+lista_variaveis ::= IDENTIFICADOR lista_variaveis_2;
+lista_variaveis_2 ::= VIRGULA lista_variaveis | /**VAZIO**/;
+ 
+lista_declara_procedure ::= declara_procedure PONTO_VIRGULA lista_declara_proc_2;
+lista_declara_proc_2 ::= lista_declara_procedure | /**VAZIO**/;
+
+declara_procedure ::= RESERVADO_PROCEDURE IDENTIFICADOR declara_proc_2;
+declara_proc_2 ::= proc_parametros PONTO_VIRGULA  declara_proc_3 | PONTO_VIRGULA declara_proc_3;
+declara_proc_3 ::= lista_declara_variavel comando_composto | comando_composto;
+
+proc_parametros ::= ABRE_PARENTESES proc_lista_parametros proc_lista_parametros_2 FECHA_PARENTESES;
+
+proc_lista_parametros ::= RESERVADO_VAR lista_variaveis DOIS_PONTOS tipo | lista_variaveis DOIS_PONTOS tipo;
+proc_lista_parametros_2 ::= PONTO_VIRGULA proc_lista_parametros proc_lista_parametros_2|;
+
+comando_composto ::= RESERVADO_BEGIN comando lista_comandos RESERVADO_END;
+lista_comandos ::= PONTO_VIRGULA comando lista_comandos | /**vazio**/;
+comando ::= atribuicao | chamada_funcao |comando_composto | comando_condicional | comando_repetitivo;
+
+atribuicao ::= IDENTIFICADOR SIMBOLO_ATRIBUICAO expressao;
+
+comando_condicional ::= RESERVADO_IF expressao RESERVADO_THEN comando comando_condicional_2;
+
+comando_condicional_2 ::= /**VAZIO**/|RESERVADO_ELSE comando;
+
+comando_repetitivo ::= RESERVADO_WHILE expressao RESERVADO_DO comando;
+
+expressao ::= expressao_simples expressao_2;
+expressao_2 ::= operacao_relacional expressao_simples | /**VAZIO**/;
+
+operacao_relacional ::= OPERACAO_IGUAL | OPERACAO_DIFERENTE | 
+   OPERACAO_MENOR_IGUAL | OPERACAO_MENOR | 
+   OPERACAO_MAIOR_IGUAL | OPERACAO_MAIOR;
+
+expressao_simples ::= OPERACAO_SOMA termo lista_expressao_simples | 
+   OPERACAO_SUB termo lista_expressao_simples | 
+   termo lista_expressao_simples;
+
+lista_expressao_simples ::= OPERACAO_SOMA termo lista_expressao_simples | 
+   OPERACAO_SUB termo lista_expressao_simples | 
+   OPERACAO_OR termo lista_expressao_simples | 
+   /**vazio**/;
+
+termo ::= fator lista_termos;
+
+lista_termos ::= OPERACAO_DIV fator lista_termos | OPERACAO_AND fator lista_termos | OPERACAO_MULT fator lista_termos | /**vazio**/;
+
+fator ::= variavel | NUMERO_INTEIRO | ABRE_PARENTESES expressao FECHA_PARENTESES | 
+   OPERACAO_NOT fator | RESERVADO_FALSE | RESERVADO_TRUE | 
+   ABRE_PARENTESES error {:System.out.println("O parenteses não foi fechado!");:} | 
+   FECHA_PARENTESES error {:System.out.println("O parenteses não foi aberto!");:};
+                    
+variavel ::= IDENTIFICADOR;
+
+lista_expressoes ::= expressao lista_expressoes_2;
+lista_expressoes_2 ::= VIRGULA expressao lista_expressoes_2 | /*vazio*/ ;
+
+tipo ::= RESERVADO_BOOLEAN | RESERVADO_INTEGER | error {:System.err.println("Esperava receber int ou boolean");:};
+
+chamada_funcao ::= IDENTIFICADOR chamada_funcao_2;
+chamada_funcao_2 ::= ABRE_PARENTESES lista_expressoes FECHA_PARENTESES | /**vazio**/;
