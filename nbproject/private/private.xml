@@ -2,6 +2,22 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/user/TextLineComponent.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/user/CustomScanner.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/user/Principal.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/user/FilterFile.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/flex/Token.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/cup/Generator.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/cup/parser.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/flex/LexiconParser.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/flex/SyntacticParser.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/cup/sym.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/cup/lalg.cup</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/flex/flexCode.txt</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/flex/SymbolParser.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/flex/Errors.java</file>
+            <file>file:/C:/Users/Teste/Documents/Unesp/Compiladores/ProjetoFinal/src/flex/Generator.java</file>
+        </group>
     </open-files>
 </project-private>

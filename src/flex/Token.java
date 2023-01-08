@@ -4,6 +4,7 @@
  */
 package flex;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -66,6 +67,15 @@ public class Token {
         "COMENTARIO_BLOCO_SEM_ABRIR",
         "CHAR_INVALIDO"
     };
+    
+    public static final String[] tokensWrongNames = new String[]{
+        "error",
+        "NUMERO_REAL_FORMATO_RUIM",
+        "IDENTIFICADOR_MUITO_GRANDE",
+        "COMENTARIO_BLOCO_SEM_FECHAR",
+        "COMENTARIO_BLOCO_SEM_ABRIR",
+        "CHAR_INVALIDO"
+    };
 
     private String lexeme;
     private int token;
@@ -73,6 +83,7 @@ public class Token {
     private int columnStart;
     private int columnEnd;
     private final int offset;
+    private boolean isWrong;
 
     public String getTokenName() {
         return tokensNames[token];
@@ -85,6 +96,7 @@ public class Token {
         this.columnStart = columnStart;
         this.columnEnd = columnStart + lexeme.length() - 1;
         this.offset = offset;
+        this.isWrong = Arrays.stream(tokensWrongNames).anyMatch(tokensNames[token]::equals);
     }
 
     public String getLexeme() {
@@ -95,6 +107,14 @@ public class Token {
         this.lexeme = lexeme;
     }
 
+    public boolean getIsWrong() {
+        return isWrong;
+    }
+
+    public void setIsWrong(boolean isWrong) {
+        this.isWrong = isWrong;
+    }
+    
     public int getToken() {
         return token;
     }

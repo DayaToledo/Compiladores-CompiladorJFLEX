@@ -7,6 +7,7 @@ import flex.LexiconParser;
 import flex.SyntacticParser;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -20,6 +21,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -92,6 +94,8 @@ public class Principal extends javax.swing.JFrame {
         itemSyntacticParser = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        setLocation(new java.awt.Point(0, 0));
 
         codeTextarea.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
         codeTextarea.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -106,14 +110,14 @@ public class Principal extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Lexema", "Token", "Linha", "Coluna Inicial", "Coluna Final"
+                "Lexema", "Token", "Linha", "Coluna Inicial", "Coluna Final", "Error"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
+                false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -236,6 +240,7 @@ public class Principal extends javax.swing.JFrame {
         );
 
         pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void codeTextareaKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_codeTextareaKeyReleased
@@ -290,17 +295,18 @@ public class Principal extends javax.swing.JFrame {
         dtm.getDataVector().removeAllElements();
         dtm.fireTableDataChanged();
 
-        String[] rowTable = new String[5];
-        
-//        TableCellRenderer tcr = new Paint(); 
-//        tokensTable.setDefaultRenderer(Object.class, tcr);
-        
+        String[] rowTable = new String[6];
+
+        TableCellRenderer tcr = new PaintTableCellRenderer();
+        tokensTable.setDefaultRenderer(Object.class, tcr);
+
         for (Token currentToken : tokens) {
             rowTable[0] = currentToken.getLexeme();
             rowTable[1] = currentToken.getTokenName();
             rowTable[2] = String.valueOf(currentToken.getRow());
             rowTable[3] = String.valueOf(currentToken.getColumnStart());
             rowTable[4] = String.valueOf(currentToken.getColumnEnd());
+            rowTable[5] = String.valueOf(currentToken.getIsWrong());
             dtm.addRow(rowTable);
         }
         tokensTable.revalidate();
@@ -312,7 +318,7 @@ public class Principal extends javax.swing.JFrame {
         dtm.getDataVector().removeAllElements();
         dtm.fireTableDataChanged();
 
-        String[] rowTable = new String[5];
+        String[] rowTable = new String[3];
         for (Errors currentError : errors) {
             rowTable[2] = String.valueOf(currentError.getColumn());
             rowTable[1] = String.valueOf(currentError.getRow());
@@ -358,41 +364,40 @@ public class Principal extends javax.swing.JFrame {
         myDocumentFilter.ignoredTokens = parser.getTokenIgnorados();
     }
 
-    private class Paint extends JLabel implements TableCellRenderer {
-
-        public Paint() {
-            setOpaque(true);
-        }
+    private class PaintTableCellRenderer extends DefaultTableCellRenderer {
 
         @Override
         public Component getTableCellRendererComponent(
                 JTable table,
-                Object value, boolean isSelected, boolean hasFocus,
-                int row, int column) {
+                Object value,
+                boolean isSelected,
+                boolean hasFocus,
+                int row,
+                int column
+        ) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-            if (row == 1) {
+            Boolean isWrong = Boolean.valueOf((String)table.getValueAt(row, 5));
+            Color lightGrayColor = new Color(240, 240, 240);
+            Color blackColor = new Color(40, 40, 40);
+            
+            if (isWrong == true) {
                 setBackground(Color.RED);
+                setForeground(Color.WHITE);
             } else {
-                setBackground(table.getBackground());
+                if (isSelected == true) {
+                    setBackground(getBackground());
+                    setForeground(getForeground());
+                } else {
+                    if (row % 2 == 0) {
+                        setBackground(Color.WHITE);
+                    } else {
+                        setBackground(lightGrayColor);
+                    }
+                    setForeground(blackColor);
+                }
             }
-
             return this;
-        }
-
-        @Override
-        public void validate() {
-        }
-
-        @Override
-        public void revalidate() {
-        }
-
-        @Override
-        protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-        }
-
-        @Override
-        public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
         }
     }
 
