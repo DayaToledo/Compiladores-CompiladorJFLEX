@@ -11,7 +11,8 @@ import javax.swing.filechooser.FileFilter;
  *
  * @author Dayana Toledo e Gabriela Tamashiro
  */
-public class FilterFile extends FileFilter{
+public class FilterFile extends FileFilter {
+
     @Override
     public boolean accept(File f) {
         return f.isDirectory() || f.getName().endsWith(".txt");

@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
  */
-package flex;
+package lexicon;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -14,7 +14,7 @@ import java.util.Objects;
 public class Token {
 
     public static void main(String[] args){
-        for(int i=0; i < tokensNames.length;i++){
+        for(int i = 0; i < tokensNames.length; i++){
             System.out.println(i + " - " + tokensNames[i]);
         }
     }

@@ -2,8 +2,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package flex;
+package syntacticAndSemantic;
 
+import lexicon.Token;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -195,7 +196,7 @@ public class SymbolParser {
     }
 
     private class ValueTableSymbols {
-        
+
         public String lexeme;
         public int category;
         public int tipo;

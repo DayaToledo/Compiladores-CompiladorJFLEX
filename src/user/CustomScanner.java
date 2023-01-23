@@ -4,8 +4,8 @@
  */
 package user;
 
-import flex.LexiconParser;
-import flex.Token;
+import lexicon.LexiconParser;
+import lexicon.Token;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class CustomScanner extends LexiconParser {
         }
     }
 
-    public int lookAhead(Integer ... tokens) {
+    public int lookAhead(Integer... tokens) {
         Token token = nextToken();
         try {
             while (!tokenIs(token, tokens)) {

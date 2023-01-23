@@ -136,7 +136,7 @@ public class TextLineComponent extends JPanel implements CaretListener, Document
             int preferredWidth = insets.left + insets.right + width;
 
             Dimension d = getPreferredSize();
-            d.setSize(preferredWidth, HEIGHT);
+            d.setSize(preferredWidth, this.HEIGHT);
             setPreferredSize(d);
             setSize(d);
         }

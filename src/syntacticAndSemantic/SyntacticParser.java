@@ -2,10 +2,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package flex;
+package syntacticAndSemantic;
 
+import lexicon.Token;
 import cup.sym;
 import java.util.ArrayList;
+import machineCode.MachineCode;
 import user.CustomScanner;
 
 /**
@@ -17,6 +19,7 @@ public class SyntacticParser {
     private final ArrayList<Errors> errors;
     private final ArrayList<Token> ignoredTokens = new ArrayList<>();
     private final SymbolParser tableSymbols;
+    private final MachineCode machineCode = new MachineCode();
     private final CustomScanner scanner;
     private Token currentToken;
 
@@ -44,6 +47,9 @@ public class SyntacticParser {
 
     public boolean start() {
         validateProgram();
+        if (!errors.isEmpty()) {
+            machineCode.clear();
+        }
         return currentToken.getToken() == sym.EOF;
     }
 
@@ -56,6 +62,10 @@ public class SyntacticParser {
             }
         }
         return false;
+    }
+
+    public MachineCode getMachineCode() {
+        return machineCode;
     }
 
     private void getValidateProgramError(String msg) {
@@ -98,8 +108,52 @@ public class SyntacticParser {
         }
     }
 
+    private void verifyAndSetMachineCode(Token token) {
+        switch (token.getToken()) {
+            case sym.OPERACAO_IGUAL:
+                machineCode.addInstruction(MachineCode.COMPARAR_IGUAL, null);
+                break;
+            case sym.OPERACAO_DIFERENTE:
+                machineCode.addInstruction(MachineCode.COMPARAR_DIFERENTE, null);
+                break;
+            case sym.OPERACAO_MAIOR:
+                machineCode.addInstruction(MachineCode.COMPARAR_MAIOR, null);
+                break;
+            case sym.OPERACAO_MAIOR_IGUAL:
+                machineCode.addInstruction(MachineCode.COMPARAR_MAIOR_IGUAL, null);
+                break;
+            case sym.OPERACAO_MENOR:
+                machineCode.addInstruction(MachineCode.COMPARAR_MENOR, null);
+                break;
+            case sym.OPERACAO_MENOR_IGUAL:
+                machineCode.addInstruction(MachineCode.COMPARAR_MENOR_IGUAL, null);
+                break;
+            case sym.OPERACAO_SOMA:
+                machineCode.addInstruction(MachineCode.OPERADOR_SOMA, null);
+                break;
+            case sym.OPERACAO_SUB:
+                machineCode.addInstruction(MachineCode.OPERADOR_SUB, null);
+                break;
+            case sym.OPERACAO_OR:
+                machineCode.addInstruction(MachineCode.OPERADOR_OR, null);
+                break;
+            case sym.OPERACAO_DIV:
+                machineCode.addInstruction(MachineCode.OPERADOR_DIV, null);
+                break;
+            case sym.OPERACAO_AND:
+                machineCode.addInstruction(MachineCode.OPERADOR_AND, null);
+                break;
+            case sym.OPERACAO_MULT:
+                machineCode.addInstruction(MachineCode.OPERADOR_MULT, null);
+                break;
+            default:
+                break;
+        }
+    }
+
     private void validateProgram() {
         if (isToken(sym.RESERVADO_PROGRAM)) {
+            this.machineCode.addInstruction(MachineCode.INICIAR_PROGRAMA, null);
             consume();
         } else {
             getValidateProgramError("program");
@@ -129,6 +183,10 @@ public class SyntacticParser {
         } else {
             getSintaxError("Espera-se fim de arquivo");
         }
+        for (int i = 0; i < tableSymbols.getCurrentAddress(); i++) {
+            machineCode.addInstruction(MachineCode.DESALOCAR_MEMORIA, 1);
+        }
+        machineCode.addInstruction(MachineCode.PARAR, null);
     }
 
     private void validateBlocoCodigo() {
@@ -177,7 +235,10 @@ public class SyntacticParser {
         int type = validateTipo();
         ArrayList<Token> tokens = validateListaVariaveis();
         for (Token t : tokens) {
-            tableSymbols.addSimbolo(t, SymbolParser.CATEGORIA_VARIAVEL, type);
+            boolean alreadyDeclared = tableSymbols.addSimbolo(t, SymbolParser.CATEGORIA_VARIAVEL, type);
+            if (!alreadyDeclared) {
+                machineCode.addInstruction(MachineCode.ALOCAR_MEMORIA, 1);
+            }
         }
     }
 
@@ -421,6 +482,8 @@ public class SyntacticParser {
             consume();
         }
         int type = validateExpressao();
+        int label = machineCode.getSize();
+        machineCode.addInstruction(MachineCode.DESVIAR_SE_FALSE, null);
         if (type != SymbolParser.TIPO_BOOLEAN) {
             getSintaxError("A expressão contida na condição do IF deve ser do tipo booleano");
         }
@@ -440,13 +503,19 @@ public class SyntacticParser {
             }
         }
         validateComando();
+        machineCode.updateInstruction(label, MachineCode.DESVIAR_SE_FALSE, machineCode.getSize() + 1);
         validateComandoCondicional2();
     }
 
     private void validateComandoCondicional2() {
         if (isToken(sym.RESERVADO_ELSE)) {
+            int label = machineCode.getSize();
+            machineCode.addInstruction(MachineCode.DESVIAR_SEMPRE, null);
+            machineCode.addInstruction(MachineCode.NADA, null);
             consume();
             validateComando();
+            machineCode.updateInstruction(label, MachineCode.DESVIAR_SEMPRE, machineCode.getSize());
+            machineCode.addInstruction(MachineCode.NADA, null);
         }
     }
 
@@ -454,10 +523,14 @@ public class SyntacticParser {
         if (isToken(sym.RESERVADO_WHILE)) {
             consume();
         }
+        int positionInitLoop = machineCode.getSize();
+        machineCode.addInstruction(MachineCode.NADA, null);
         int type = validateExpressao();
         if (type != SymbolParser.TIPO_BOOLEAN) {
             getSintaxError("A expressão contida na condição do WHILE deve ser do tipo booleano");
         }
+        int positionEndLoop = machineCode.getSize();
+        machineCode.addInstruction(MachineCode.DESVIAR_SE_FALSE, null);
         if (isToken(sym.RESERVADO_DO)) {
             consume();
         } else {
@@ -469,6 +542,9 @@ public class SyntacticParser {
             }
         }
         validateComando();
+        machineCode.addInstruction(MachineCode.DESVIAR_SEMPRE, positionInitLoop);
+        machineCode.updateInstruction(positionEndLoop, MachineCode.DESVIAR_SE_FALSE, machineCode.getSize());
+        machineCode.addInstruction(MachineCode.NADA, null);
     }
 
     private void validateComando2() {
@@ -478,6 +554,7 @@ public class SyntacticParser {
             int type = tableSymbols.searchSimbolo(id, SymbolParser.CATEGORIA_VARIAVEL);
             consume();
             int typeSecondary = validateAtribuicao();
+            machineCode.addInstruction(MachineCode.ARMAZENAR_VALOR, tableSymbols.addressSymbol(id));
             if (type != typeSecondary && type != SymbolParser.TIPO_NULL && typeSecondary != SymbolParser.TIPO_NULL) {
                 getSintaxError("Atribuição com tipos conflitantes");
             }
@@ -501,11 +578,13 @@ public class SyntacticParser {
         boolean opEntreInt = false;
         if (isToken(sym.OPERACAO_IGUAL, sym.OPERACAO_MAIOR, sym.OPERACAO_MAIOR_IGUAL, sym.OPERACAO_MENOR,
                 sym.OPERACAO_MENOR_IGUAL, sym.OPERACAO_DIFERENTE)) {
+            Token token = currentToken;
             if (!isToken(sym.OPERACAO_IGUAL, sym.OPERACAO_DIFERENTE)) {
                 opEntreInt = true;
             }
             consume();
             int typeSecondary = validateExpressaoSimples();
+            verifyAndSetMachineCode(token);
             if (typePrimary != typeSecondary) {
                 getSintaxError("Operação de comparação deve ser entre tipos iguais");
             } else if (opEntreInt && (typePrimary != SymbolParser.TIPO_INT || typeSecondary != SymbolParser.TIPO_INT)) {
@@ -521,11 +600,12 @@ public class SyntacticParser {
         return type;
     }
 
-    private void validateChamadaFuncao(Token idProcedimento) {
+    private void validateChamadaFuncao(Token token) {
         if (isToken(sym.ABRE_PARENTESES)) {
             consume();
-            ArrayList<Integer> tipos = validateListaExpressoes();
-            tableSymbols.parametrosChamadaProcedimento(tipos, idProcedimento);
+            boolean isWrite = token.getLexeme().equals("write");
+            ArrayList<Integer> tipos = validateListaExpressoes(isWrite);
+            tableSymbols.parametrosChamadaProcedimento(tipos, token);
             if (isToken(sym.FECHA_PARENTESES)) {
                 consume();
             } else {
@@ -543,11 +623,15 @@ public class SyntacticParser {
             consume();
             ArrayList<Integer> tipos = new ArrayList<>();
             if (isToken(sym.IDENTIFICADOR)) {
+                machineCode.addInstruction(MachineCode.OPERACAO_LEITURA, null);
+                machineCode.addInstruction(MachineCode.ARMAZENAR_VALOR, tableSymbols.addressSymbol(currentToken));
                 tipos.add(tableSymbols.searchSimbolo(currentToken, SymbolParser.CATEGORIA_VARIAVEL));
                 consume();
                 while (isToken(sym.VIRGULA)) {
                     consume();
                     if (isToken(sym.IDENTIFICADOR)) {
+                        machineCode.addInstruction(MachineCode.OPERACAO_LEITURA, null);
+                        machineCode.addInstruction(MachineCode.ARMAZENAR_VALOR, tableSymbols.addressSymbol(currentToken));
                         tipos.add(tableSymbols.searchSimbolo(currentToken, SymbolParser.CATEGORIA_VARIAVEL));
                         consume();
                     } else {
@@ -572,6 +656,7 @@ public class SyntacticParser {
     private int validateExpressaoSimples() {
         if (isToken(sym.OPERACAO_SOMA, sym.OPERACAO_SUB)) {
             consume();
+            machineCode.addInstruction(MachineCode.INVERTER_SINAL, null);
         }
         int typePrimary = validateTermo();
         int typeOperation;
@@ -584,6 +669,9 @@ public class SyntacticParser {
             }
             consume();
             typeSecondary = validateTermo();
+
+            Token token = currentToken;
+            verifyAndSetMachineCode(token);
 
             boolean erro = false;
             if (typePrimary != typeOperation && typePrimary != SymbolParser.TIPO_NULL) {
@@ -603,12 +691,18 @@ public class SyntacticParser {
         return typePrimary;
     }
 
-    private ArrayList<Integer> validateListaExpressoes() {
+    private ArrayList<Integer> validateListaExpressoes(boolean isWrite) {
         ArrayList<Integer> tipos = new ArrayList<>();
         tipos.add(validateExpressao());
+        if (isWrite) {
+            machineCode.addInstruction(MachineCode.OPERACAO_IMPRIME, null);
+        }
         while (isToken(sym.VIRGULA)) {
             consume();
             tipos.add(validateExpressao());
+            if (isWrite) {
+                machineCode.addInstruction(MachineCode.OPERACAO_IMPRIME, null);
+            }
         }
         return tipos;
     }
@@ -625,6 +719,9 @@ public class SyntacticParser {
             }
             consume();
             typeSecondary = validateFator();
+
+            Token token = currentToken;
+            verifyAndSetMachineCode(token);
 
             boolean erro = false;
             if (typePrimary != typeOperation && typePrimary != SymbolParser.TIPO_NULL) {
@@ -650,8 +747,14 @@ public class SyntacticParser {
             type = validateVariavel();
         } else if (isToken(sym.NUMERO_INTEIRO)) {
             type = SymbolParser.TIPO_INT;
+            machineCode.addInstruction(MachineCode.CARREGAR_CONSTANTE, Integer.valueOf(currentToken.getLexeme()));
             consume();
         } else if (isToken(sym.RESERVADO_FALSE, sym.RESERVADO_TRUE)) {
+            if (isToken(sym.RESERVADO_FALSE)) {
+                machineCode.addInstruction(MachineCode.CARREGAR_CONSTANTE, 0);
+            } else {
+                machineCode.addInstruction(MachineCode.CARREGAR_CONSTANTE, 1);
+            }
             type = SymbolParser.TIPO_BOOLEAN;
             consume();
         } else if (isToken(sym.ABRE_PARENTESES)) {
@@ -669,6 +772,7 @@ public class SyntacticParser {
         } else if (isToken(sym.OPERACAO_NOT)) {
             consume();
             type = validateFator();
+            machineCode.addInstruction(MachineCode.OPERADOR_NOT, null);
             if (type != SymbolParser.TIPO_BOOLEAN) {
                 if (type != SymbolParser.TIPO_NULL) {
                     getSintaxError("Operação NOT com um valor não boleano");
@@ -689,6 +793,7 @@ public class SyntacticParser {
         int type = SymbolParser.TIPO_NULL;
         if (isToken(sym.IDENTIFICADOR)) {
             type = tableSymbols.searchSimbolo(currentToken, SymbolParser.CATEGORIA_VARIAVEL);
+            machineCode.addInstruction(MachineCode.CARREGAR_VALOR, tableSymbols.addressSymbol(currentToken));
             consume();
         }
         return type;

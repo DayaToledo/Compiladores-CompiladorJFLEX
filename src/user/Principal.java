@@ -1,13 +1,14 @@
 package user;
 
 import cup.sym;
-import flex.Errors;
-import flex.Token;
-import flex.LexiconParser;
-import flex.SyntacticParser;
+import syntacticAndSemantic.Errors;
+import lexicon.Token;
+import lexicon.LexiconParser;
+import syntacticAndSemantic.SyntacticParser;
+import interpreter.IO;
+import interpreter.Interpreter;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,29 +19,30 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import static java.lang.System.exit;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
+import machineCode.Instruction;
 
 /**
  *
  * @author Dayana Toledo e Gabriela Tamashiro
  */
-public class Principal extends javax.swing.JFrame {
+public class Principal extends javax.swing.JFrame implements IO {
 
     private final CustomDocumentFilter myDocumentFilter;
     private ArrayList<Errors> errors;
     private ArrayList<Token> tokens;
+    private ArrayList<Instruction> machineCode;
     private int size;
 
     public static void main(String args[]) {
@@ -86,12 +88,20 @@ public class Principal extends javax.swing.JFrame {
         errorsPanel = new javax.swing.JPanel();
         errorsScrollPanel = new javax.swing.JScrollPane();
         errorsTable = new javax.swing.JTable();
+        machinePanel = new javax.swing.JPanel();
+        machineScrollPanel = new javax.swing.JScrollPane();
+        machineCodeTable = new javax.swing.JTable();
+        executionPanel = new javax.swing.JPanel();
+        executionScrollPanel = new javax.swing.JScrollPane();
+        executionTextArea = new javax.swing.JTextArea();
         menuBarTop = new javax.swing.JMenuBar();
         menuFile = new javax.swing.JMenu();
         itemLoadFile = new javax.swing.JMenuItem();
         menuExecutar = new javax.swing.JMenu();
         itemLexiconParser = new javax.swing.JMenuItem();
         itemSyntacticParser = new javax.swing.JMenuItem();
+        itemMachineCode = new javax.swing.JMenuItem();
+        itemInterpreter = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -99,6 +109,9 @@ public class Principal extends javax.swing.JFrame {
 
         codeTextarea.setFont(new java.awt.Font("Monospaced", 0, 13)); // NOI18N
         codeTextarea.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                codeTextareaKeyPressed(evt);
+            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 codeTextareaKeyReleased(evt);
             }
@@ -129,6 +142,20 @@ public class Principal extends javax.swing.JFrame {
             }
         });
         tokensScrollPanel.setViewportView(tokensTable);
+        if (tokensTable.getColumnModel().getColumnCount() > 0) {
+            tokensTable.getColumnModel().getColumn(2).setMinWidth(80);
+            tokensTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+            tokensTable.getColumnModel().getColumn(2).setMaxWidth(80);
+            tokensTable.getColumnModel().getColumn(3).setMinWidth(100);
+            tokensTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+            tokensTable.getColumnModel().getColumn(3).setMaxWidth(100);
+            tokensTable.getColumnModel().getColumn(4).setMinWidth(100);
+            tokensTable.getColumnModel().getColumn(4).setPreferredWidth(100);
+            tokensTable.getColumnModel().getColumn(4).setMaxWidth(100);
+            tokensTable.getColumnModel().getColumn(5).setMinWidth(80);
+            tokensTable.getColumnModel().getColumn(5).setPreferredWidth(80);
+            tokensTable.getColumnModel().getColumn(5).setMaxWidth(80);
+        }
 
         javax.swing.GroupLayout tokensPanelLayout = new javax.swing.GroupLayout(tokensPanel);
         tokensPanel.setLayout(tokensPanelLayout);
@@ -167,6 +194,14 @@ public class Principal extends javax.swing.JFrame {
             }
         });
         errorsScrollPanel.setViewportView(errorsTable);
+        if (errorsTable.getColumnModel().getColumnCount() > 0) {
+            errorsTable.getColumnModel().getColumn(1).setMinWidth(80);
+            errorsTable.getColumnModel().getColumn(1).setPreferredWidth(80);
+            errorsTable.getColumnModel().getColumn(1).setMaxWidth(80);
+            errorsTable.getColumnModel().getColumn(2).setMinWidth(80);
+            errorsTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+            errorsTable.getColumnModel().getColumn(2).setMaxWidth(80);
+        }
 
         javax.swing.GroupLayout errorsPanelLayout = new javax.swing.GroupLayout(errorsPanel);
         errorsPanel.setLayout(errorsPanelLayout);
@@ -180,6 +215,64 @@ public class Principal extends javax.swing.JFrame {
         );
 
         tabPanelBottom.addTab("Erros ocorridos", errorsPanel);
+
+        machineCodeTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Rótulo", "Instrução", "Operador"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, true, true
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        machineScrollPanel.setViewportView(machineCodeTable);
+
+        javax.swing.GroupLayout machinePanelLayout = new javax.swing.GroupLayout(machinePanel);
+        machinePanel.setLayout(machinePanelLayout);
+        machinePanelLayout.setHorizontalGroup(
+            machinePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(machineScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 849, Short.MAX_VALUE)
+        );
+        machinePanelLayout.setVerticalGroup(
+            machinePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(machineScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 252, Short.MAX_VALUE)
+        );
+
+        tabPanelBottom.addTab("Código de máquina", machinePanel);
+
+        executionTextArea.setEditable(false);
+        executionTextArea.setColumns(20);
+        executionTextArea.setRows(5);
+        executionScrollPanel.setViewportView(executionTextArea);
+
+        javax.swing.GroupLayout executionPanelLayout = new javax.swing.GroupLayout(executionPanel);
+        executionPanel.setLayout(executionPanelLayout);
+        executionPanelLayout.setHorizontalGroup(
+            executionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(executionScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 849, Short.MAX_VALUE)
+        );
+        executionPanelLayout.setVerticalGroup(
+            executionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(executionPanelLayout.createSequentialGroup()
+                .addComponent(executionScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 239, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        tabPanelBottom.addTab("Saida da execução", executionPanel);
 
         menuFile.setText("Arquivo");
         menuFile.setToolTipText("");
@@ -206,13 +299,29 @@ public class Principal extends javax.swing.JFrame {
         });
         menuExecutar.add(itemLexiconParser);
 
-        itemSyntacticParser.setText("Analisador Sintático");
+        itemSyntacticParser.setText("Analisador Sintático e Semântico");
         itemSyntacticParser.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 itemSyntacticParserActionPerformed(evt);
             }
         });
         menuExecutar.add(itemSyntacticParser);
+
+        itemMachineCode.setText("Código de máquina");
+        itemMachineCode.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                itemMachineCodeActionPerformed(evt);
+            }
+        });
+        menuExecutar.add(itemMachineCode);
+
+        itemInterpreter.setText("Interpretador (compilar e executar)");
+        itemInterpreter.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                itemInterpreterActionPerformed(evt);
+            }
+        });
+        menuExecutar.add(itemInterpreter);
 
         menuBarTop.add(menuExecutar);
 
@@ -278,19 +387,72 @@ public class Principal extends javax.swing.JFrame {
 
     private void itemLexiconParserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemLexiconParserActionPerformed
         this.getAllTokens();
-        this.fillLexiconTable(tokens);
+        this.clearPanels();
+        this.fillLexiconTable();
     }//GEN-LAST:event_itemLexiconParserActionPerformed
 
     private void itemSyntacticParserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemSyntacticParserActionPerformed
         this.getAllErrorsAndTokens();
-        this.fillLexiconTable(tokens);
-        this.fillSyntacticTable(errors);
+        this.clearPanels();
+        this.fillLexiconTable();
+        this.fillSyntacticTable();
         this.myDocumentFilter.updateTextStyles();
         tabPanelBottom.setSelectedIndex(1);
         repaint();
     }//GEN-LAST:event_itemSyntacticParserActionPerformed
 
-    public void fillLexiconTable(ArrayList<Token> tokens) {
+    private void itemMachineCodeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemMachineCodeActionPerformed
+        SyntacticParser parser = this.getAllErrorsAndTokens();
+        this.getMachineCode(parser);
+        this.clearPanels();
+        this.fillLexiconTable();
+        this.fillSyntacticTable();
+        this.fillMachineCodeTable();
+        this.myDocumentFilter.updateTextStyles();
+        repaint();
+    }//GEN-LAST:event_itemMachineCodeActionPerformed
+
+    private void itemInterpreterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemInterpreterActionPerformed
+        SyntacticParser parser = this.getAllErrorsAndTokens();
+        this.getMachineCode(parser);
+        this.clearPanels();
+        this.fillLexiconTable();
+        this.fillSyntacticTable();
+        this.fillMachineCodeTable();
+        this.getInterpreter(parser);
+        this.myDocumentFilter.updateTextStyles();
+        repaint();
+    }//GEN-LAST:event_itemInterpreterActionPerformed
+
+    private void codeTextareaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_codeTextareaKeyPressed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_codeTextareaKeyPressed
+
+    public void clearPanels() {
+        DefaultTableModel dtm;
+
+        dtm = (DefaultTableModel) tokensTable.getModel();
+        dtm.getDataVector().removeAllElements();
+        dtm.fireTableDataChanged();
+        tokensTable.revalidate();
+        tokensTable.repaint();
+
+        dtm = (DefaultTableModel) errorsTable.getModel();
+        dtm.getDataVector().removeAllElements();
+        dtm.fireTableDataChanged();
+        errorsTable.revalidate();
+        errorsTable.repaint();
+
+        dtm = (DefaultTableModel) machineCodeTable.getModel();
+        dtm.getDataVector().removeAllElements();
+        dtm.fireTableDataChanged();
+        machineCodeTable.revalidate();
+        machineCodeTable.repaint();
+
+        executionTextArea.setText("");
+    }
+
+    public void fillLexiconTable() {
         DefaultTableModel dtm = (DefaultTableModel) tokensTable.getModel();
         dtm.getDataVector().removeAllElements();
         dtm.fireTableDataChanged();
@@ -313,7 +475,7 @@ public class Principal extends javax.swing.JFrame {
         tokensTable.repaint();
     }
 
-    public void fillSyntacticTable(ArrayList<Errors> errors) {
+    public void fillSyntacticTable() {
         DefaultTableModel dtm = (DefaultTableModel) errorsTable.getModel();
         dtm.getDataVector().removeAllElements();
         dtm.fireTableDataChanged();
@@ -329,9 +491,33 @@ public class Principal extends javax.swing.JFrame {
         errorsTable.repaint();
     }
 
+    public void fillMachineCodeTable() {
+        if (errors.isEmpty()) {
+            DefaultTableModel dtm = (DefaultTableModel) machineCodeTable.getModel();
+            dtm.getDataVector().removeAllElements();
+            dtm.fireTableDataChanged();
+
+            String[] rowTable = new String[3];
+            for (Instruction currentCode : machineCode) {
+                rowTable[0] = currentCode.getLabelStr();
+                rowTable[1] = currentCode.getInstruction();
+                rowTable[2] = currentCode.getOperateStr();
+                dtm.addRow(rowTable);
+            }
+            machineCodeTable.revalidate();
+            machineCodeTable.repaint();
+
+            tabPanelBottom.setSelectedIndex(2);
+        } else {
+            tabPanelBottom.setSelectedIndex(1);
+        }
+    }
+
     public void getAllTokens() {
         Token current;
-        LexiconParser parser = new LexiconParser(new StringReader(codeTextarea.getText()));
+        String stringCode = codeTextarea.getText();
+        StringReader readerCode = new StringReader(stringCode);
+        LexiconParser parser = new LexiconParser(readerCode);
         tokens = new ArrayList<>();
 
         try {
@@ -349,19 +535,58 @@ public class Principal extends javax.swing.JFrame {
         }
     }
 
-    public void getAllErrorsAndTokens() {
+    public SyntacticParser getAllErrorsAndTokens() {
         errors = new ArrayList<>();
         tokens = new ArrayList<>();
-        SyntacticParser parser = new SyntacticParser(new CustomScanner((new StringReader(codeTextarea.getText())), tokens), errors);
+        String stringCode = codeTextarea.getText();
+        StringReader readerCode = new StringReader(stringCode);
+        CustomScanner scannerCode = new CustomScanner(readerCode, tokens);
+        SyntacticParser parser = new SyntacticParser(scannerCode, errors);
 
         try {
-            Boolean response = parser.start();
-            System.out.println(response);
+            parser.start();
         } catch (Exception ex) {
             Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         myDocumentFilter.ignoredTokens = parser.getTokenIgnorados();
+        return parser;
+    }
+
+    public void getMachineCode(SyntacticParser parser) {
+        machineCode = parser.getMachineCode().getInstructions();
+    }
+
+    public void getInterpreter(SyntacticParser parser) {
+        if (errors.isEmpty()) {
+            tabPanelBottom.setSelectedIndex(3);
+            executionTextArea.setText("");
+            Interpreter interpreter = new Interpreter(parser.getMachineCode().getInstructions(), this);
+            interpreter.run();
+            if (executionTextArea.getText().equals("")) {
+                executionTextArea.setText("O código inserido não contém nenhuma interação com o usuário (read/write)!");
+            }
+        } else {
+            tabPanelBottom.setSelectedIndex(1);
+        }
+    }
+
+    @Override
+    public int readInt() {
+        String input = JOptionPane.showInputDialog(this, "Digite um número inteiro", "0");
+        try {
+            int number = Integer.valueOf(input);
+            executionTextArea.append("Entrada: " + number + "\n");
+            return number;
+        } catch (NumberFormatException n) {
+            JOptionPane.showMessageDialog(this, "O valor inserido está incorreto!", "Erro", JOptionPane.ERROR_MESSAGE);
+            return readInt();
+        }
+    }
+
+    @Override
+    public void printInt(int number) {
+        executionTextArea.append("Saida: " + number + "\n");
     }
 
     private class PaintTableCellRenderer extends DefaultTableCellRenderer {
@@ -377,10 +602,10 @@ public class Principal extends javax.swing.JFrame {
         ) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-            Boolean isWrong = Boolean.valueOf((String)table.getValueAt(row, 5));
+            Boolean isWrong = Boolean.valueOf((String) table.getValueAt(row, 5));
             Color lightGrayColor = new Color(240, 240, 240);
             Color blackColor = new Color(40, 40, 40);
-            
+
             if (isWrong == true) {
                 setBackground(Color.RED);
                 setForeground(Color.WHITE);
@@ -444,37 +669,42 @@ public class Principal extends javax.swing.JFrame {
             // Clear existing styles
             styledDocument.setCharacterAttributes(0, codeTextarea.getText().length(), blackAttributeSet, true);
             LexiconParser parser = new LexiconParser(new StringReader(codeTextarea.getText()));
-            ArrayList<Token> tokensCopy = (ignoredTokens != null ? (ArrayList<Token>) ignoredTokens.clone() : null);
             parser.tokens(true);
             Token currentToken;
+            ArrayList<Token> tokensCopy = (ignoredTokens != null ? (ArrayList<Token>) ignoredTokens.clone() : null);
 
-            while (true) {
-                currentToken = parser.yylex();
-                if (currentToken.getToken() == sym.EOF) {
-                    break;
+            try {
+                while (true) {
+                    parser.next_token();
+                    currentToken = parser.yylex();
+                    if (currentToken.getToken() == sym.EOF) {
+                        break;
+                    }
+                    AttributeSet ts = blackAttributeSet;
+                    if (currentToken.getToken() >= 2 && currentToken.getToken() <= 15) {
+                        ts = blueAttributeSet;
+                    } else if ((currentToken.getToken() >= 22 && currentToken.getToken() <= 34)) {
+                        ts = redAttributeSet;
+                    } else if (currentToken.getToken() == 35 || currentToken.getToken() == 36) {
+                        ts = pinkAttributeSet;
+                    } else if (currentToken.getToken() == 37) {
+                        ts = greenAttributeSet;
+                    } else if (currentToken.getToken() >= 40 && currentToken.getToken() <= 42) {
+                        ts = grayAttributeSet;
+                    }
+                    if (ignoredTokens != null && ignoredTokens.contains(currentToken)) {
+                        ignoredTokens.remove(currentToken);
+                        ts = styleContext.addAttribute(ts, StyleConstants.Underline, true);
+                    }
+                    styledDocument.setCharacterAttributes(
+                            currentToken.getOffset() - currentToken.getRow(),
+                            currentToken.getLexeme().length(),
+                            ts,
+                            false
+                    );
                 }
-                AttributeSet ts = blackAttributeSet;
-                if (currentToken.getToken() >= 2 && currentToken.getToken() <= 15) {
-                    ts = blueAttributeSet;
-                } else if ((currentToken.getToken() >= 22 && currentToken.getToken() <= 34)) {
-                    ts = redAttributeSet;
-                } else if (currentToken.getToken() == 35 || currentToken.getToken() == 36) {
-                    ts = pinkAttributeSet;
-                } else if (currentToken.getToken() == 37) {
-                    ts = greenAttributeSet;
-                } else if (currentToken.getToken() >= 40 && currentToken.getToken() <= 42) {
-                    ts = grayAttributeSet;
-                }
-                if (ignoredTokens != null && ignoredTokens.contains(currentToken)) {
-                    ignoredTokens.remove(currentToken);
-                    ts = styleContext.addAttribute(ts, StyleConstants.Underline, true);
-                }
-                styledDocument.setCharacterAttributes(
-                        currentToken.getOffset() - currentToken.getRow(),
-                        currentToken.getLexeme().length(),
-                        ts,
-                        false
-                );
+            } catch (IOException ex) {
+                Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
             }
             ignoredTokens = tokensCopy;
         }
@@ -486,9 +716,17 @@ public class Principal extends javax.swing.JFrame {
     private javax.swing.JPanel errorsPanel;
     private javax.swing.JScrollPane errorsScrollPanel;
     private javax.swing.JTable errorsTable;
+    private javax.swing.JPanel executionPanel;
+    private javax.swing.JScrollPane executionScrollPanel;
+    private javax.swing.JTextArea executionTextArea;
+    private javax.swing.JMenuItem itemInterpreter;
     private javax.swing.JMenuItem itemLexiconParser;
     private javax.swing.JMenuItem itemLoadFile;
+    private javax.swing.JMenuItem itemMachineCode;
     private javax.swing.JMenuItem itemSyntacticParser;
+    private javax.swing.JTable machineCodeTable;
+    private javax.swing.JPanel machinePanel;
+    private javax.swing.JScrollPane machineScrollPanel;
     private javax.swing.JMenuBar menuBarTop;
     private javax.swing.JMenu menuExecutar;
     private javax.swing.JMenu menuFile;
